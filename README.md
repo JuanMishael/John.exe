@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# John.exe
 
-## Getting Started
+Personal portfolio for **John Calimoso** — full-stack developer.
+Home, about, and a projects section with per-project case-study pages.
 
-First, run the development server:
+## Theme
+
+An 8-bit / pixel-art interface, built on the Pixel Button Kit palette:
+
+- **Type** — `Press Start 2P` for headings, `VT323` for body (both via `next/font`)
+- **Chrome** — 4px pixel grid, notched outlines drawn with hard box-shadows instead of borders, scanline overlay
+- **Two themes** — cream *light* and `data-theme="dusk"` dark, toggled in the settings dialog and remembered in `localStorage` (applied pre-hydration by an inline script, so no flash)
+- **Sound** — square-wave UI blips and a looping chiptune, synthesised in the Web Audio API. No audio files.
+- **Settings** — native `<dialog>` for the theme switch and SFX / music volume
+
+## Tech stack
+
+| | |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| UI | React 19, TypeScript |
+| Styling | Plain CSS with custom properties — no CSS framework |
+| Audio | Web Audio API |
+| Deps | Zero runtime dependencies beyond Next/React |
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+```bash
+npm run build    # production build
+npm run lint
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Layout
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+  app/
+    page.tsx               home — hero, featured work, about teaser, contact
+    about/                 bio, skills, photography
+    projects/              index + [slug] case studies
+    globals.css            palette, pixel primitives, both themes
+  components/              Nav, Footer, Terminal, ProjectCard, PhotoFrame, Settings
+  lib/
+    projects.ts            project data
+    audio.ts               synthesised blips + chiptune
+```
 
-## Learn More
+Project content lives in [`src/lib/projects.ts`](src/lib/projects.ts) — add an entry and its card and case-study page appear automatically.
 
-To learn more about Next.js, take a look at the following resources:
+## Contact
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[Email](mailto:johnmishaelparcal@gmail.com) · [LinkedIn](https://www.linkedin.com/in/john-mishael-calimoso-148abb257/) · [GitHub](https://github.com/JuanMishael) · [Unsplash](https://unsplash.com/@juan_ito)

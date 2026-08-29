@@ -1,49 +1,633 @@
+/* Palette: Pixel Button Kit. Light = the base ramp (ink/cream/panel/gray/red/
+   gold/blue/dusk); [data-theme="dusk"] = the kit's .px-dark ramp. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f8f0dc; /* cream */
+  --surface: #e8dcc0; /* panel */
+  --text: #2b2b3d; /* ink */
+  --muted: rgba(43, 43, 61, 0.62);
+  --divider: rgba(43, 43, 61, 0.18);
+  --accent: #d94b3f; /* red */
+  --accent2: #3b4a6b; /* dusk — the blue reads too light on cream at 9px */
+  --term-bg: #3b4a6b;
+  --term-fg: #f0d64a; /* gold */
+  --shadow: rgba(43, 43, 61, 0.22);
+  --stripe-a: #e8dcc0;
+  --stripe-b: #cfc8ba; /* gray */
+  --scanline: rgba(43, 43, 61, 0.035);
+  --on: #5bc46a; /* green — kit's "go" colour, for switched-on state */
+
+  /* pixel-button kit: 4px grid. The outline is 4 hard box-shadows rather than a
+     border, which leaves the corners notched. Bump --px for chunkier pixels. */
+  --px: 4px;
+  --edge:
+    0 calc(var(--px) * -1) 0 var(--text), 0 var(--px) 0 var(--text),
+    calc(var(--px) * -1) 0 0 var(--text), var(--px) 0 0 var(--text);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+[data-theme="dusk"] {
+  --bg: #14141f;
+  --surface: #232336;
+  /* kit's dark ramp drops --px-ink to #0f0f18; kept on the light text so the
+     --edge outline stays visible against a fully dark page. */
+  --text: #cfc8e0;
+  --muted: rgba(207, 200, 224, 0.62);
+  --divider: rgba(207, 200, 224, 0.2);
+  --accent: #7a5bd9;
+  --accent2: #b9f05a;
+  --term-bg: #0f0f18;
+  --term-fg: #5ad9c0;
+  --shadow: rgba(0, 0, 0, 0.35);
+  --stripe-a: #232336;
+  --stripe-b: #3a3a52;
+  --scanline: rgba(207, 200, 224, 0.035);
+  --on: #5ad9c0;
+}
+
+@keyframes jc-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
   }
 }
 
-html {
-  height: 100%;
+@keyframes jc-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
 }
 
-html,
-body {
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-body {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@keyframes jc-glow {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.14);
+  }
 }
 
 * {
   box-sizing: border-box;
-  padding: 0;
+}
+
+html,
+body {
   margin: 0;
+  padding: 0;
+}
+
+body {
+  padding: 10px;
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--scanline) 50%, transparent 50%);
+  background-size: 100% 8px;
+  color: var(--text);
+  font-family: var(--font-body), monospace;
+  transition:
+    background-color 0.25s,
+    color 0.25s;
+}
+
+/* 10px margin on every side. Body padding alone only offsets the start — content
+   scrolls straight through the top gutter — so a fixed frame holds it open. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  border: 10px solid var(--bg);
+  pointer-events: none;
+  z-index: 30;
 }
 
 a {
   color: inherit;
-  text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+.container {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+.pixel {
+  font-family: var(--font-heading), monospace;
+}
+
+.divider-top {
+  border-top: var(--px) solid var(--divider);
+}
+
+/* header — one accent title bar, reusing the same .win-bar rule as the settings
+   dialog. The tabs ride its bottom edge; the active one breaks through into the
+   page below. Sticks at 10px so it clears the page frame. */
+.topbar {
+  position: sticky;
+  top: 10px;
+  z-index: 20;
+}
+
+/* own class, not `.topbar .win-bar` — the settings dialog lives inside this bar,
+   so a descendant selector also restyled its title bar. */
+/* .win-bar.topbar-bar, not .topbar-bar: .win-bar is declared later in this file,
+   so at equal specificity it would win and keep its centring and bottom padding. */
+.win-bar.topbar-bar {
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 5px 32px 0 40px;
+  font-size: 13px;
+}
+
+.win-title {
+  margin-right: auto;
+  padding: 16px 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+}
+
+/* no bottom edge in the shadow list — the tab is open at the base so it can
+   run into the page. --stripe-b doubles as the kit's gray here. */
+.tab {
+  font-family: var(--font-heading), monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-decoration: none;
+  padding: 14px 18px;
+  color: var(--muted);
+  background: var(--stripe-b);
+  box-shadow:
+    0 calc(var(--px) * -1) 0 var(--text),
+    calc(var(--px) * -1) 0 0 var(--text),
+    var(--px) 0 0 var(--text),
+    inset 0 var(--px) 0 rgba(255, 255, 255, 0.28);
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tab[aria-current="page"] {
+  color: var(--text);
+  background: var(--bg);
+  /* pulls the tab down over the bar's rule, joining it to the page */
+  margin-bottom: calc(var(--px) * -1);
+  padding-bottom: calc(14px + var(--px));
+}
+
+.topbar-bar .nav-btn {
+  margin: 0 0 8px 24px;
+}
+
+/* --- the bevel recipe -------------------------------------------------
+   outline   = --edge (notched pixel corners)
+   top inset = highlight, bottom inset = shade
+   press     = translateY(--px) + flip the insets
+   margin    = --px so the shadow-outline never collides with a neighbour
+----------------------------------------------------------------------- */
+.btn,
+.nav-btn {
+  --hl: rgba(255, 255, 255, 0.5);
+  --sh: rgba(0, 0, 0, 0.14);
+  border: 0;
+  margin: var(--px);
+  cursor: pointer;
+  line-height: 1;
+  font-family: var(--font-body), monospace;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow:
+    var(--edge),
+    inset 0 var(--px) 0 var(--hl),
+    inset 0 calc(var(--px) * -2) 0 var(--sh);
+}
+
+.btn:hover,
+.nav-btn:hover {
+  animation: jc-glow 0.7s steps(2) infinite;
+}
+
+.btn:active,
+.nav-btn:active {
+  animation: none;
+  transform: translateY(var(--px));
+  box-shadow:
+    var(--edge),
+    inset 0 calc(var(--px) * 2) 0 var(--sh);
+}
+
+.btn:focus-visible,
+.nav-btn:focus-visible,
+.card:focus-visible {
+  outline: var(--px) solid var(--accent2);
+  outline-offset: var(--px);
+}
+
+.btn {
+  display: inline-block;
+  text-decoration: none;
+  font-size: 19px;
+  padding: 13px 20px;
+}
+
+.btn-primary {
+  --hl: rgba(255, 255, 255, 0.3);
+  --sh: rgba(0, 0, 0, 0.22);
+  color: var(--bg);
+  background: var(--accent);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.btn-secondary {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.nav-btn {
+  color: var(--text);
+  padding: 8px;
+  display: grid;
+  place-items: center;
+}
+
+/* 12px, not 18 — the icon viewBox is 12 units, so only whole multiples keep the
+   rect edges on device pixels. 28x28 total, matching .cap. */
+.nav-btn .icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Pixel icon set, painted as a mask so the glyph takes currentColor and follows
+   both theme ramps. Sizes are multiples of the 12-unit viewBox — anything else
+   lands rect edges on fractional pixels and softens them. */
+.icon {
+  display: block;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  background: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+}
+
+.icon-gear {
+  --icon: url(/icons/gear.svg);
+}
+.icon-volume {
+  --icon: url(/icons/volume.svg);
+}
+.icon-mute {
+  --icon: url(/icons/mute.svg);
+}
+.icon-play {
+  --icon: url(/icons/play.svg);
+}
+.icon-pause {
+  --icon: url(/icons/pause.svg);
+}
+
+.icon-close {
+  --icon: url(/icons/close.svg);
+  width: 12px;
+  height: 12px;
+}
+
+/* --- settings window --------------------------------------------------- */
+/* The dialog is a DOM child of the header bar (showModal only moves where it
+   paints, not where it sits), so it inherited that bar's heading font and
+   letter-spacing. Every inherited text property is reset here so the window
+   stands on its own regardless of where it's mounted. */
+.win {
+  border: 0;
+  padding: var(--px);
+  margin: auto;
+  width: min(520px, calc(100vw - 40px));
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-body), monospace;
+  font-size: 20px;
+  letter-spacing: normal;
+  text-align: left;
+  box-shadow: var(--edge);
+}
+
+.win:focus {
+  outline: none;
+}
+
+.win::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.win-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 10px 10px 14px;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: var(--font-heading), monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  box-shadow:
+    inset 0 var(--px) 0 rgba(255, 255, 255, 0.3),
+    inset 0 calc(var(--px) * -1) 0 rgba(0, 0, 0, 0.25);
+}
+
+/* own --hl/--sh so .cap works on a bare span too, not only alongside .btn */
+.cap {
+  --hl: rgba(255, 255, 255, 0.5);
+  --sh: rgba(0, 0, 0, 0.14);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text);
+  background: var(--surface);
+  /* plain --edge: the notched corners let the red title bar through, which is
+     the pixel-art convention — corners take the colour of whatever is behind. */
+  box-shadow:
+    var(--edge),
+    inset 0 var(--px) 0 var(--hl),
+    inset 0 calc(var(--px) * -2) 0 var(--sh);
+}
+
+.cap:active {
+  box-shadow:
+    var(--edge),
+    inset 0 calc(var(--px) * 2) 0 var(--sh);
+}
+
+/* the shared offset ring reads as a halo against the title bar — ring it on the
+   inside instead, so the close button still has a focus indicator. */
+/* ink, not --accent2: the navy ring read as a stray blue highlight. This only
+   thickens the button's own border, and only when tabbed to. */
+.cap:focus-visible {
+  outline: none;
+  box-shadow:
+    var(--edge),
+    inset 0 0 0 var(--px) var(--text);
+}
+
+.win-body {
+  padding: 30px 24px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.win-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.win-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* switch — knob runs the full track height and sits flush to one end. Its solid
+   --px ring lands exactly on the track's own outline top, bottom and outer
+   side, so the only new line it draws is the divider facing the track. */
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex: none;
+  width: 96px;
+  height: 48px;
+  margin: var(--px);
+  cursor: pointer;
+  background: var(--stripe-b);
+  box-shadow:
+    var(--edge),
+    inset 0 6px 0 rgba(0, 0, 0, 0.18);
+}
+
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  /* literal, not var(--bg): the knob stays white in both ramps — on dusk --bg is
+     near-black and the knob would vanish into the track. */
+  background: #f8f0dc;
+  transition: left 0.12s steps(2);
+  box-shadow:
+    0 0 0 var(--px) var(--text),
+    inset 0 var(--px) 0 rgba(255, 255, 255, 0.5),
+    inset 0 calc(var(--px) * -1) 0 rgba(0, 0, 0, 0.2);
+}
+
+.switch:checked {
+  background: var(--on);
+}
+
+.switch:checked::after {
+  left: calc(100% - 40px);
+}
+
+.switch:focus-visible,
+.range:focus-visible {
+  outline: var(--px) solid var(--accent2);
+  outline-offset: var(--px);
+}
+
+/* slider */
+.range {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 176px;
+  height: 32px;
+  flex: none;
+  margin: var(--px);
+  cursor: pointer;
+  background: var(--stripe-b);
+  box-shadow:
+    var(--edge),
+    inset 0 5px 0 rgba(0, 0, 0, 0.16);
+}
+
+/* solid ring on the thumb rather than --edge — it rides over the track outline,
+   so notched corners would strand loose pixels wherever it stops. */
+.range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 44px;
+  background: #f8f0dc;
+  box-shadow:
+    0 0 0 var(--px) var(--text),
+    inset 0 var(--px) 0 rgba(255, 255, 255, 0.5),
+    inset 0 calc(var(--px) * -1) 0 rgba(0, 0, 0, 0.2);
+}
+
+.range::-moz-range-thumb {
+  border: 0;
+  border-radius: 0;
+  width: 20px;
+  height: 44px;
+  background: #f8f0dc;
+  box-shadow:
+    0 0 0 var(--px) var(--text),
+    inset 0 var(--px) 0 rgba(255, 255, 255, 0.5),
+    inset 0 calc(var(--px) * -1) 0 rgba(0, 0, 0, 0.2);
+}
+
+.section {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 50px 40px;
+}
+
+.heading-lg {
+  font-family: var(--font-heading), monospace;
+  font-size: 18px;
+  margin: 0;
+}
+
+/* panel: same notched outline, no bevel — for anything that isn't pressable */
+.panel,
+.card,
+.term,
+.photo-frame {
+  border: 0;
+  margin: var(--px);
+  background: var(--surface);
+  box-shadow: var(--edge);
+}
+
+.panel {
+  padding: 20px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.12s steps(2);
+}
+
+.card:hover {
+  transform: translateY(calc(var(--px) * -1));
+}
+
+.card-category {
+  font-family: var(--font-heading), monospace;
+  font-size: 9px;
+  color: var(--accent2);
+}
+
+.card-title {
+  font-size: 24px;
+}
+
+.card-blurb {
+  font-size: 18px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.card-cta {
+  font-size: 17px;
+  color: var(--accent);
+  margin-top: auto;
+}
+
+.tag {
+  font-size: 13px;
+  border: 2px solid var(--divider);
+  color: var(--muted);
+  padding: 2px 8px;
+}
+
+.term {
+  background: var(--term-bg);
+}
+
+.term-bar {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px;
+  box-shadow: inset 0 calc(var(--px) * -1) 0 rgba(255, 255, 255, 0.12);
+}
+
+.photo-frame {
+  /* literal, not var(--surface): print stock stays white in both ramps */
+  background: #fff;
+  box-shadow:
+    var(--edge),
+    8px 8px 0 var(--shadow);
+  padding: 14px 14px 42px;
+  transform: rotate(-2deg);
+  position: relative;
+  display: inline-block;
+}
+
+.photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: sepia(0.22) saturate(1.2) contrast(1.03) brightness(1.01);
+  display: block;
+}
+
+.photo-date {
+  position: absolute;
+  bottom: 14px;
+  right: 16px;
+  font-family: var(--font-body), monospace;
+  font-size: 16px;
+  color: var(--accent);
+}
+
+.footer {
+  border-top: var(--px) solid var(--divider);
+  padding: 24px 40px;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.blink {
+  animation: jc-blink 1s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:hover,
+  .nav-btn:hover {
+    animation: none;
+  }
+  .card {
+    transition: none;
+  }
+  .card:hover {
+    transform: none;
+  }
+  .switch::after {
+    transition: none;
+  }
+  .blink {
+    animation: none;
   }
 }

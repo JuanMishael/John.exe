@@ -23,6 +23,10 @@ An 8-bit / pixel-art interface, built on the Pixel Button Kit palette:
 | Deps | Zero runtime dependencies beyond Next/React |
 
 
+## Docs
+
+Setup, architecture, the pixel/theming system, and what's planned next live in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+
 ## Contact
 
 [Email](mailto:johnmishaelparcal@gmail.com) · [LinkedIn](https://www.linkedin.com/in/john-mishael-calimoso-148abb257/) · [GitHub](https://github.com/JuanMishael) · [Unsplash](https://unsplash.com/@juan_ito)

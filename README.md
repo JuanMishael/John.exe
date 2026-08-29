@@ -1,7 +1,6 @@
 # John.exe
 
-Personal portfolio for **John Calimoso** — full-stack developer.
-Home, about, and a projects section with per-project case-study pages.
+Personal portfolio for myself to show case what stuff I create so you can know me too ^_^
 
 ## Theme
 
@@ -23,34 +22,6 @@ An 8-bit / pixel-art interface, built on the Pixel Button Kit palette:
 | Audio | Web Audio API |
 | Deps | Zero runtime dependencies beyond Next/React |
 
-## Run it
-
-```bash
-npm install
-npm run dev      # http://localhost:3000
-```
-
-```bash
-npm run build    # production build
-npm run lint
-```
-
-## Layout
-
-```
-src/
-  app/
-    page.tsx               home — hero, featured work, about teaser, contact
-    about/                 bio, skills, photography
-    projects/              index + [slug] case studies
-    globals.css            palette, pixel primitives, both themes
-  components/              Nav, Footer, Terminal, ProjectCard, PhotoFrame, Settings
-  lib/
-    projects.ts            project data
-    audio.ts               synthesised blips + chiptune
-```
-
-Project content lives in [`src/lib/projects.ts`](src/lib/projects.ts) — add an entry and its card and case-study page appear automatically.
 
 ## Contact
 

@@ -98,6 +98,11 @@ on the page (or clicking the hint bar) swaps in `Shell`, the interactive one. `e
 swaps back — remounting `Demo`, which is what resets its timers. Navigating to another
 page unmounts the whole thing, so the hero is always back to the animation on return.
 
+The window dots are real: green maximises the frame into a centred overlay (`.term-max`
+plus a backdrop), yellow restores, Esc and a backdrop click also restore. Red is
+decorative, so it's a `<span>` rather than a focusable no-op button. Maximising takes the
+frame out of the hero grid — the column is sized in `fr`, so nothing beside it moves.
+
 Adding a command is one `case` in `run()`, or one entry in `REPLIES` if the output is
 static text. `open <slug>` is the only one that navigates; it reads `PROJECTS`, so new
 projects are openable the moment they're added to the data file.

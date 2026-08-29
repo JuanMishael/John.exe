@@ -56,10 +56,65 @@ const REPLIES: Record<string, string[]> = {
 
 export default function Terminal() {
   const [live, setLive] = useState(false);
+  const [max, setMax] = useState(false);
 
-  // Remounting on exit resets the animation's internal timers cleanly, and
-  // client-side nav away from the page unmounts it anyway.
-  return live ? <Shell onExit={() => setLive(false)} /> : <Demo onStart={() => setLive(true)} />;
+  // Esc restores, matching what the settings dialog's native <dialog> already does.
+  useEffect(() => {
+    if (!max) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMax(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [max]);
+
+  return (
+    <>
+      {max && <div className="term-backdrop" onClick={() => setMax(false)} />}
+      {/* ponytail: maximising fixes the frame out of the hero grid. The column is
+          sized in fr so nothing beside it shifts, and the backdrop covers the rest. */}
+      <div className={max ? "term term-max" : "term"}>
+        <div className="term-bar">
+          <span className="term-dot" style={{ background: "#ff5f57" }} />
+          <button
+            type="button"
+            className="term-dot"
+            style={{ background: "#febc2e" }}
+            onClick={() => setMax(false)}
+            title="Restore"
+            aria-label="Restore terminal"
+          />
+          <button
+            type="button"
+            className="term-dot"
+            style={{ background: "#28c840" }}
+            onClick={() => setMax(true)}
+            title="Maximise"
+            aria-label="Maximise terminal"
+          />
+          <span className="term-name">terminal — {live ? "john.exe" : "zsh"}</span>
+        </div>
+
+        {/* Remounting on exit resets the animation's internal timers cleanly, and
+            client-side nav away from the page unmounts it anyway. */}
+        {live ? <Shell onExit={() => setLive(false)} /> : <Demo onStart={() => setLive(true)} />}
+
+        <button
+          type="button"
+          className="term-hint"
+          onClick={() => setLive(!live)}
+        >
+          {live ? (
+            <>
+              [ type <span style={{ color: "var(--term-fg)" }}>exit</span> to stop the ride ]
+            </>
+          ) : (
+            <>
+              [ press <span style={{ color: "var(--term-fg)" }}>ENTER</span> to take the wheel ]
+            </>
+          )}
+        </button>
+      </div>
+    </>
+  );
 }
 
 /* ---- idle animation ---------------------------------------------------- */
@@ -117,15 +172,9 @@ function Demo({ onStart }: { onStart: () => void }) {
   }, [onStart]);
 
   return (
-    <div className="term">
-      <TermBar />
-      <div className="term-screen">
-        {typed}
-        <span className="blink">█</span>
-      </div>
-      <button type="button" className="term-hint" onClick={onStart}>
-        [ press <span style={{ color: "var(--term-fg)" }}>ENTER</span> to take the wheel ]
-      </button>
+    <div className="term-screen">
+      {typed}
+      <span className="blink">█</span>
     </div>
   );
 }
@@ -183,46 +232,27 @@ function Shell({ onExit }: { onExit: () => void }) {
   }
 
   return (
-    <div className="term" onClick={() => input.current?.focus()}>
-      <TermBar live />
-      <div className="term-screen" ref={screen}>
-        {history.map((line, i) => (
-          <div key={i}>{line || " "}</div>
-        ))}
-        <div style={{ display: "flex" }}>
-          <span style={{ paddingRight: "0.5ch" }}>$</span>
-          <input
-            ref={input}
-            className="term-input"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key !== "Enter") return;
-              run(value);
-              setValue("");
-            }}
-            aria-label="terminal input"
-            autoComplete="off"
-            spellCheck={false}
-          />
-        </div>
+    <div className="term-screen" ref={screen} onClick={() => input.current?.focus()}>
+      {history.map((line, i) => (
+        <div key={i}>{line || " "}</div>
+      ))}
+      <div style={{ display: "flex" }}>
+        <span style={{ paddingRight: "0.5ch" }}>$</span>
+        <input
+          ref={input}
+          className="term-input"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter") return;
+            run(value);
+            setValue("");
+          }}
+          aria-label="terminal input"
+          autoComplete="off"
+          spellCheck={false}
+        />
       </div>
-      <button type="button" className="term-hint" onClick={onExit}>
-        [ type <span style={{ color: "var(--term-fg)" }}>exit</span> to stop the ride ]
-      </button>
-    </div>
-  );
-}
-
-function TermBar({ live }: { live?: boolean }) {
-  return (
-    <div className="term-bar">
-      <span style={{ width: 11, height: 11, background: "#ff5f57" }} />
-      <span style={{ width: 11, height: 11, background: "#febc2e" }} />
-      <span style={{ width: 11, height: 11, background: "#28c840" }} />
-      <span style={{ marginLeft: "auto", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
-        {live ? "terminal — john.exe" : "terminal — zsh"}
-      </span>
     </div>
   );
 }

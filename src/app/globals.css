@@ -562,8 +562,54 @@ a {
   padding: 2px 8px;
 }
 
+/* same offset drop shadow as .photo-frame — hard-edged, no blur */
 .term {
   background: var(--term-bg);
+  box-shadow:
+    var(--edge),
+    8px 8px 0 var(--shadow);
+}
+
+.term-max {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(940px, calc(100vw - 80px));
+  z-index: 41;
+}
+
+.term-max .term-screen {
+  height: min(62vh, 560px);
+}
+
+.term-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.term-dot {
+  border: 0;
+  padding: 0;
+  width: 11px;
+  height: 11px;
+}
+
+button.term-dot {
+  cursor: pointer;
+}
+
+button.term-dot:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+.term-name {
+  margin-left: auto;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 /* Fixed height, not min-height: the shell scrolls its own output instead of

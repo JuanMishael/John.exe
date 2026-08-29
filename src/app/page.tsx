@@ -174,7 +174,7 @@ export default function Home() {
           }}
         >
           Open to full-stack roles and interesting freelance work. Reach out —
-          Let's build awsome stuff ;)
+          Let&apos;s build awesome stuff ;)
         </p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
           <a

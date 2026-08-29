@@ -91,6 +91,17 @@ Two things to know if you touch it:
 Music can't autoplay; it starts on the first click of the session (wired up in
 `Settings`), and the same global click handler is what blips every button.
 
+## The terminal
+
+`Terminal` has two modes. `Demo` is the idle typing animation; pressing Enter anywhere
+on the page (or clicking the hint bar) swaps in `Shell`, the interactive one. `exit`
+swaps back — remounting `Demo`, which is what resets its timers. Navigating to another
+page unmounts the whole thing, so the hero is always back to the animation on return.
+
+Adding a command is one `case` in `run()`, or one entry in `REPLIES` if the output is
+static text. `open <slug>` is the only one that navigates; it reads `PROJECTS`, so new
+projects are openable the moment they're added to the data file.
+
 ## Adding a project
 
 Append an entry to `PROJECTS` in [`src/lib/projects.ts`](../src/lib/projects.ts). The card
@@ -107,9 +118,6 @@ Not built yet, in rough order of "worth it".
 - **Konami code easter egg.** A `keydown` listener comparing against the sequence, then
   do something silly — flip the palette, rain sprites, unlock a hidden nav tab. ~20 lines,
   no dependencies.
-- **Terminal that takes input.** `Terminal` already types on its own; letting people type
-  back (`help`, `ls`, `whoami`, `cat about.txt`) turns the hero into the exploration hook.
-  It's a string switch over a command map — still no dependencies.
 - **A small retro game.** Canvas 2D, one `requestAnimationFrame` loop, arrow keys. Snake
   or Pong is a couple hundred lines and reuses `audio.ts` for the blips. Put it behind
   the easter egg rather than in the nav, so finding it is the reward. No game engine —

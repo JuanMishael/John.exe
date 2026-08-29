@@ -1,6 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { PROJECTS } from "@/lib/projects";
+import { blip } from "@/lib/audio";
 
 const LINES = [
   "$ whoami",
@@ -9,7 +12,59 @@ const LINES = [
   "build ok · 0 errors · deployed",
 ];
 
+const HELP = [
+  "available commands:",
+  "  whoami       who is this guy",
+  "  about        the short version",
+  "  projects     list the work",
+  "  open <slug>  open a case study",
+  "  skills       what i build with",
+  "  contact      how to reach me",
+  "  clear        clear the screen",
+  "  exit         back to the animation",
+];
+
+const BANNER = [
+  "john.exe — interactive shell",
+  "type `help` for commands, `exit` to leave.",
+  "",
+];
+
+// Static replies. Anything that needs the router or the history lives in run().
+const REPLIES: Record<string, string[]> = {
+  whoami: ["john_calimoso — full-stack dev", "based in the philippines · .NET + React"],
+  about: [
+    "several years between .NET backends and React front ends —",
+    "enterprise telco platforms down to scrappy internal tools.",
+    "off the clock: a camera. → unsplash.com/@juan_ito",
+  ],
+  skills: [
+    "frontend   react · typescript · javascript · html/css",
+    "backend    .net · c# · asp.net core · node.js",
+    "mobile     react native · electron",
+    "tools      git · docker · playwright · appium",
+    "ml         tensorflow lite · python · opencv",
+  ],
+  contact: [
+    "mail       johnmishaelparcal@gmail.com",
+    "linkedin   /in/john-mishael-calimoso-148abb257",
+    "github     @JuanMishael",
+    "unsplash   @juan_ito",
+  ],
+  sudo: ["nice try."],
+};
+
 export default function Terminal() {
+  const [live, setLive] = useState(false);
+
+  // Remounting on exit resets the animation's internal timers cleanly, and
+  // client-side nav away from the page unmounts it anyway.
+  return live ? <Shell onExit={() => setLive(false)} /> : <Demo onStart={() => setLive(true)} />;
+}
+
+/* ---- idle animation ---------------------------------------------------- */
+
+function Demo({ onStart }: { onStart: () => void }) {
   const [typed, setTyped] = useState("");
 
   useEffect(() => {
@@ -49,29 +104,125 @@ export default function Terminal() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Enter from anywhere on the page — but not while the visitor is tabbed onto
+  // something Enter already means something for.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Enter") return;
+      if ((e.target as Element | null)?.closest("a, button, input, dialog")) return;
+      onStart();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onStart]);
+
   return (
     <div className="term">
-      <div className="term-bar">
-        <span style={{ width: 11, height: 11, background: "#ff5f57" }} />
-        <span style={{ width: 11, height: 11, background: "#febc2e" }} />
-        <span style={{ width: 11, height: 11, background: "#28c840" }} />
-        <span style={{ marginLeft: "auto", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
-          terminal — zsh
-        </span>
-      </div>
-      <div
-        style={{
-          padding: "28px 24px",
-          fontSize: 22,
-          color: "var(--term-fg)",
-          minHeight: 190,
-          lineHeight: 1.6,
-          whiteSpace: "pre-wrap",
-        }}
-      >
+      <TermBar />
+      <div className="term-screen">
         {typed}
         <span className="blink">█</span>
       </div>
+      <button type="button" className="term-hint" onClick={onStart}>
+        [ press <span style={{ color: "var(--term-fg)" }}>ENTER</span> to take the wheel ]
+      </button>
+    </div>
+  );
+}
+
+/* ---- interactive shell ------------------------------------------------- */
+
+function Shell({ onExit }: { onExit: () => void }) {
+  const router = useRouter();
+  const [history, setHistory] = useState<string[]>(BANNER);
+  const [value, setValue] = useState("");
+  const screen = useRef<HTMLDivElement>(null);
+  const input = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    input.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (screen.current) screen.current.scrollTop = screen.current.scrollHeight;
+  }, [history]);
+
+  function run(raw: string) {
+    const [cmd, ...rest] = raw.trim().split(/\s+/);
+    const echo = `$ ${raw}`;
+    const out = (lines: string[]) => setHistory((h) => [...h, echo, ...lines, ""]);
+
+    if (!cmd) return setHistory((h) => [...h, echo]);
+    blip(520);
+
+    switch (cmd) {
+      case "help":
+        return out(HELP);
+      case "clear":
+        return setHistory([]);
+      case "exit":
+        return onExit();
+      case "ls":
+      case "projects":
+        return out([
+          `${PROJECTS.length} projects — \`open <slug>\` to read one:`,
+          ...PROJECTS.map((p) => `  ${p.slug.padEnd(21)}${p.name}`),
+        ]);
+      case "open": {
+        const slug = rest[0];
+        const project = PROJECTS.find((p) => p.slug === slug);
+        if (!project) {
+          return out([slug ? `no project called \`${slug}\`` : "usage: open <slug>", "try `projects`"]);
+        }
+        out([`opening ${project.name}…`]);
+        return router.push(`/projects/${project.slug}`);
+      }
+      default:
+        return out(REPLIES[cmd] ?? [`command not found: ${cmd} — try \`help\``]);
+    }
+  }
+
+  return (
+    <div className="term" onClick={() => input.current?.focus()}>
+      <TermBar live />
+      <div className="term-screen" ref={screen}>
+        {history.map((line, i) => (
+          <div key={i}>{line || " "}</div>
+        ))}
+        <div style={{ display: "flex" }}>
+          <span style={{ paddingRight: "0.5ch" }}>$</span>
+          <input
+            ref={input}
+            className="term-input"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter") return;
+              run(value);
+              setValue("");
+            }}
+            aria-label="terminal input"
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </div>
+      </div>
+      <button type="button" className="term-hint" onClick={onExit}>
+        [ type <span style={{ color: "var(--term-fg)" }}>exit</span> to stop the ride ]
+      </button>
+    </div>
+  );
+}
+
+function TermBar({ live }: { live?: boolean }) {
+  return (
+    <div className="term-bar">
+      <span style={{ width: 11, height: 11, background: "#ff5f57" }} />
+      <span style={{ width: 11, height: 11, background: "#febc2e" }} />
+      <span style={{ width: 11, height: 11, background: "#28c840" }} />
+      <span style={{ marginLeft: "auto", fontSize: 13, color: "rgba(255,255,255,0.4)" }}>
+        {live ? "terminal — john.exe" : "terminal — zsh"}
+      </span>
     </div>
   );
 }
